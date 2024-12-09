@@ -10,8 +10,7 @@ func main() {
 	mux.Handle("/", http.FileServer(http.Dir(".")))
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/plain")
-		w.Header().Set("Content-Type", "charset=utf-8")
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(200)
 
 		_, err := w.Write([]byte("OK"))
