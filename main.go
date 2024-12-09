@@ -28,6 +28,11 @@ func (cfg *apiConfig) hitsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hits: " + hits))
 }
 
+func (cfg *apiConfig) resetHitsHandler(w http.ResponseWriter, r *http.Request) {
+	cfg.fileserverHits = atomic.Int32{}
+	w.WriteHeader(http.StatusOK)
+}
+
 func main() {
 	var apiCfg apiConfig
 	handler := http.StripPrefix("/app", http.FileServer(http.Dir(".")))
@@ -36,6 +41,7 @@ func main() {
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(handler))
 	mux.HandleFunc("/healthz", readinessHandler)
 	mux.HandleFunc("/metrics", apiCfg.hitsHandler)
+	mux.HandleFunc("/reset", apiCfg.resetHitsHandler)
 
 	server := &http.Server{
 		Addr:    ":8080",
