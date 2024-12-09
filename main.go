@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"strconv"
 	"sync/atomic"
 )
 
@@ -18,6 +19,15 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 	})
 }
 
+func (cfg *apiConfig) hitsHandler(w http.ResponseWriter, r *http.Request) {
+	val := cfg.fileserverHits.Load()
+	hits := strconv.Itoa(int(val))
+
+	w.Header().Add("Content-Type", "text/plain' charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Hits: " + hits))
+}
+
 func main() {
 	var apiCfg apiConfig
 	handler := http.StripPrefix("/app", http.FileServer(http.Dir(".")))
@@ -25,6 +35,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(handler))
 	mux.HandleFunc("/healthz", readinessHandler)
+	mux.HandleFunc("/metrics", apiCfg.hitsHandler)
 
 	server := &http.Server{
 		Addr:    ":8080",
