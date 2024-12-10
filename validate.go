@@ -64,7 +64,7 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 
 	for i, word := range split {
 		if Contains(profanity, strings.ToLower(word)) {
-			split[i] = strings.Repeat("*", len(word))
+			split[i] = strings.Repeat("*", 4)
 		}
 	}
 
