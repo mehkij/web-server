@@ -4,7 +4,17 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 )
+
+func Contains(slice []string, item string) bool {
+	for _, v := range slice {
+		if v == item {
+			return true
+		}
+	}
+	return false
+}
 
 func validateHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
@@ -21,8 +31,8 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type returnVals struct {
-		Error string `json:"error"`
-		Valid bool   `json:"valid"`
+		Error       string `json:"error"`
+		CleanedBody string `json:"cleaned_body"`
 	}
 
 	if len(params.Body) > 140 {
@@ -43,8 +53,23 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// If length OK, censor disallowed words
+	profanity := []string{
+		"kerfuffle",
+		"sharbert",
+		"fornax",
+	}
+
+	split := strings.Split(params.Body, " ")
+
+	for i, word := range split {
+		if Contains(profanity, strings.ToLower(word)) {
+			split[i] = strings.Repeat("*", len(word))
+		}
+	}
+
 	respBody := returnVals{
-		Valid: true,
+		CleanedBody: strings.Join(split, " "),
 	}
 
 	data, err := json.Marshal(respBody)
