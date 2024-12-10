@@ -16,6 +16,18 @@ func Contains(slice []string, item string) bool {
 	return false
 }
 
+func filterMessage(filter []string, msg string) string {
+	split := strings.Split(msg, " ")
+
+	for i, word := range split {
+		if Contains(filter, strings.ToLower(word)) {
+			split[i] = strings.Repeat("*", 4)
+		}
+	}
+
+	return strings.Join(split, " ")
+}
+
 func validateHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Body string `json:"body"`
@@ -35,6 +47,10 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	type cleaned struct {
+		CleanedBody string `json:"cleaned_body"`
+	}
+
 	// If length OK, censor disallowed words
 	profanity := []string{
 		"kerfuffle",
@@ -42,20 +58,9 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 		"fornax",
 	}
 
-	split := strings.Split(params.Body, " ")
-
-	for i, word := range split {
-		if Contains(profanity, strings.ToLower(word)) {
-			split[i] = strings.Repeat("*", 4)
-		}
-	}
-
-	type cleaned struct {
-		CleanedBody string `json:"cleaned_body"`
-	}
-
+	filtered := filterMessage(profanity, params.Body)
 	respBody := cleaned{
-		CleanedBody: strings.Join(split, " "),
+		CleanedBody: filtered,
 	}
 
 	respondWithJSON(w, 200, respBody)
