@@ -30,26 +30,8 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type returnVals struct {
-		Error       string `json:"error"`
-		CleanedBody string `json:"cleaned_body"`
-	}
-
 	if len(params.Body) > 140 {
-		respBody := returnVals{
-			Error: "Chirp is too long",
-		}
-
-		data, err := json.Marshal(respBody)
-		if err != nil {
-			log.Printf("Error marshalling JSON: %s", err)
-			w.WriteHeader(500)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(400)
-		w.Write(data)
+		respondWithError(w, 400, "Chirp is too long")
 		return
 	}
 
@@ -68,18 +50,13 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	respBody := returnVals{
+	type cleaned struct {
+		CleanedBody string `json:"cleaned_body"`
+	}
+
+	respBody := cleaned{
 		CleanedBody: strings.Join(split, " "),
 	}
 
-	data, err := json.Marshal(respBody)
-	if err != nil {
-		log.Printf("Error marshalling JSON: %s", err)
-		w.WriteHeader(500)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-	w.Write(data)
+	respondWithJSON(w, 200, respBody)
 }
