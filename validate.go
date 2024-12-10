@@ -58,9 +58,8 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 		"fornax",
 	}
 
-	filtered := filterMessage(profanity, params.Body)
 	respBody := cleaned{
-		CleanedBody: filtered,
+		CleanedBody: filterMessage(profanity, params.Body),
 	}
 
 	respondWithJSON(w, 200, respBody)
