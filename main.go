@@ -10,12 +10,6 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 }
 
-func (cfg *apiConfig) resetHitsHandler(w http.ResponseWriter, r *http.Request) {
-	cfg.fileserverHits.Store(0)
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Hits reset to 0"))
-}
-
 func main() {
 	var apiCfg apiConfig
 	handler := http.StripPrefix("/app", http.FileServer(http.Dir(".")))
