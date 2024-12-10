@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"sync/atomic"
 )
 
@@ -20,16 +20,23 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 
 func (cfg *apiConfig) hitsHandler(w http.ResponseWriter, r *http.Request) {
 	val := cfg.fileserverHits.Load()
-	hits := strconv.Itoa(int(val))
 
-	w.Header().Add("Content-Type", "text/plain' charset=utf-8")
+	w.Header().Add("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Hits: " + hits))
+	w.Write([]byte(fmt.Sprintf(`
+		<html>
+			<body>
+				<h1>Welcome, Chirpy Admin</h1>
+				<p>Chirpy has been visited %d times!</p>
+			</body>
+		</html>
+	`, val)))
 }
 
 func (cfg *apiConfig) resetHitsHandler(w http.ResponseWriter, r *http.Request) {
-	cfg.fileserverHits = atomic.Int32{}
+	cfg.fileserverHits.Store(0)
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Hits reset to 0"))
 }
 
 func main() {
@@ -39,8 +46,8 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(handler))
 	mux.HandleFunc("GET /api/healthz", readinessHandler)
-	mux.HandleFunc("GET /api/metrics", apiCfg.hitsHandler)
-	mux.HandleFunc("POST /api/reset", apiCfg.resetHitsHandler)
+	mux.HandleFunc("GET /admin/metrics", apiCfg.hitsHandler)
+	mux.HandleFunc("POST /admin/reset", apiCfg.resetHitsHandler)
 
 	server := &http.Server{
 		Addr:    ":8080",
