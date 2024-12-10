@@ -57,9 +57,3 @@ func main() {
 	log.Println("Serving files from . on port: 8080")
 	log.Fatal(server.ListenAndServe())
 }
-
-func readinessHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(http.StatusText(http.StatusOK)))
-}
