@@ -2,13 +2,63 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/mehkij/web-server/internal/database"
 )
 
-func createChirpHandler(w http.ResponseWriter, r *http.Request) {
+type Chirp struct {
+	ID        uuid.UUID     `json:"id"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
+	Body      string        `json:"body"`
+	UserID    uuid.NullUUID `json:"user_id"`
+}
 
+func (cfg *apiConfig) createChirpHandler(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Body   string        `json:"body"`
+		UserID uuid.NullUUID `json:"user_id"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		log.Printf("Error decoding params: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	validatedChirp, code := validateChirp(params.Body)
+	if code == 400 {
+		respondWithError(w, code, "Chirp too long")
+		return
+	}
+
+	params.Body = validatedChirp
+
+	chirp, err := cfg.queries.CreateChirp(r.Context(), database.CreateChirpParams{
+		Body:   params.Body,
+		UserID: params.UserID,
+	})
+	if err != nil {
+		respondWithError(w, 400, fmt.Sprintf("Error creating chirp: %s", err))
+		return
+	}
+
+	respondWithJSON(w, 201, Chirp{
+		ID:        chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body:      chirp.Body,
+		UserID:    chirp.UserID,
+	})
 }
 
 func Contains(slice []string, item string) bool {
@@ -32,23 +82,9 @@ func filterMessage(filter []string, msg string) string {
 	return strings.Join(split, " ")
 }
 
-func validateHandler(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Body string `json:"body"`
-	}
-
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err := decoder.Decode(&params)
-	if err != nil {
-		log.Printf("Error decoding params: %s", err)
-		w.WriteHeader(500)
-		return
-	}
-
-	if len(params.Body) > 140 {
-		respondWithError(w, 400, "Chirp is too long")
-		return
+func validateChirp(body string) (string, int) {
+	if len(body) > 140 {
+		return "", 400
 	}
 
 	type cleaned struct {
@@ -63,8 +99,8 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respBody := cleaned{
-		CleanedBody: filterMessage(profanity, params.Body),
+		CleanedBody: filterMessage(profanity, body),
 	}
 
-	respondWithJSON(w, 200, respBody)
+	return respBody.CleanedBody, 200
 }
