@@ -15,11 +15,13 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	queries        *database.Queries
+	platform       string
 }
 
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
+	platform := os.Getenv("PLATFORM")
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -30,7 +32,8 @@ func main() {
 	dbQueries := database.New(db)
 
 	apiCfg := &apiConfig{
-		queries: dbQueries,
+		queries:  dbQueries,
+		platform: platform,
 	}
 
 	handler := http.StripPrefix("/app", http.FileServer(http.Dir(".")))
