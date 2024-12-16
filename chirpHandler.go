@@ -61,6 +61,29 @@ func (cfg *apiConfig) createChirpHandler(w http.ResponseWriter, r *http.Request)
 	})
 }
 
+func (cfg *apiConfig) getChirpsHandler(w http.ResponseWriter, r *http.Request) {
+	chirps, err := cfg.queries.GetChirps(r.Context())
+	if err != nil {
+		log.Printf("Error decoding params: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	var payload []Chirp
+
+	for _, chirp := range chirps {
+		payload = append(payload, Chirp{
+			ID:        chirp.ID,
+			CreatedAt: chirp.CreatedAt,
+			UpdatedAt: chirp.UpdatedAt,
+			Body:      chirp.Body,
+			UserID:    chirp.UserID,
+		})
+	}
+
+	respondWithJSON(w, 200, payload)
+}
+
 func Contains(slice []string, item string) bool {
 	for _, v := range slice {
 		if v == item {

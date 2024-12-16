@@ -40,11 +40,16 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(handler))
-	mux.HandleFunc("GET /api/healthz", readinessHandler)
-	mux.HandleFunc("GET /admin/metrics", apiCfg.hitsHandler)
+
+	// admin
 	mux.HandleFunc("POST /admin/reset", apiCfg.resetHitsHandler)
+	mux.HandleFunc("GET /admin/metrics", apiCfg.hitsHandler)
+
+	// api
+	mux.HandleFunc("GET /api/healthz", readinessHandler)
 	mux.HandleFunc("POST /api/users", apiCfg.createUsersHandler)
 	mux.HandleFunc("POST /api/chirps", apiCfg.createChirpHandler)
+	mux.HandleFunc("GET /api/chirps", apiCfg.getChirpsHandler)
 
 	server := &http.Server{
 		Addr:    ":8080",
