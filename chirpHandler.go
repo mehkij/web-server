@@ -61,6 +61,7 @@ func (cfg *apiConfig) createChirpHandler(w http.ResponseWriter, r *http.Request)
 	})
 }
 
+// Get all Chirps
 func (cfg *apiConfig) getChirpsHandler(w http.ResponseWriter, r *http.Request) {
 	chirps, err := cfg.queries.GetChirps(r.Context())
 	if err != nil {
@@ -84,6 +85,7 @@ func (cfg *apiConfig) getChirpsHandler(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, 200, payload)
 }
 
+// Get one Chirp
 func (cfg *apiConfig) getChirpHandler(w http.ResponseWriter, r *http.Request) {
 	chirpID, err := uuid.Parse(r.PathValue("chirpID"))
 	if err != nil {
@@ -107,6 +109,8 @@ func (cfg *apiConfig) getChirpHandler(w http.ResponseWriter, r *http.Request) {
 		UserID:    chirp.UserID,
 	})
 }
+
+// Helper functions:
 
 func Contains(slice []string, item string) bool {
 	for _, v := range slice {
