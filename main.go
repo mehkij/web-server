@@ -16,12 +16,14 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	queries        *database.Queries
 	platform       string
+	jwtSecret      string
 }
 
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
+	jwtSecret := os.Getenv("JWT_SECRET")
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -32,8 +34,9 @@ func main() {
 	dbQueries := database.New(db)
 
 	apiCfg := &apiConfig{
-		queries:  dbQueries,
-		platform: platform,
+		queries:   dbQueries,
+		platform:  platform,
+		jwtSecret: jwtSecret,
 	}
 
 	handler := http.StripPrefix("/app", http.FileServer(http.Dir(".")))
