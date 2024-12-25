@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mehkij/web-server/internal/auth"
 	"github.com/mehkij/web-server/internal/database"
 )
 
@@ -35,6 +36,20 @@ func (cfg *apiConfig) createChirpHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Authorize user
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		log.Printf("Error getting token: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	userID, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, 401, "Invalid token")
+		return
+	}
+
 	validatedChirp, code := validateChirp(params.Body)
 	if code == 400 {
 		respondWithError(w, code, "Chirp too long")
@@ -42,6 +57,7 @@ func (cfg *apiConfig) createChirpHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	params.Body = validatedChirp
+	params.UserID = uuid.NullUUID{UUID: userID, Valid: true}
 
 	chirp, err := cfg.queries.CreateChirp(r.Context(), database.CreateChirpParams{
 		Body:   params.Body,
