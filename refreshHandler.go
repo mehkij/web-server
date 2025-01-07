@@ -35,3 +35,21 @@ func (cfg *apiConfig) refreshHandler(w http.ResponseWriter, r *http.Request) {
 		Token: accessToken,
 	})
 }
+
+func (cfg *apiConfig) revokeHandler(w http.ResponseWriter, r *http.Request) {
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		log.Printf("Error getting refresh token: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	err = cfg.queries.RevokeToken(r.Context(), token)
+	if err != nil {
+		log.Printf("Error getting revoking token: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	w.WriteHeader(204)
+}
