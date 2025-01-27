@@ -1,3 +1,3 @@
 # web-server
 
-A repo where I practice building my own web server in Go.
+A repo for practicing building a web server in Go.
